@@ -11,3 +11,10 @@ type ExternalAPIResponse struct {
 		Wind        string `json:"wind"`
 	} `json:"forecast"`
 }
+
+// WeatherResponse defines the structure of our API response
+type WeatherResponse struct {
+	City        string `json:"city"`
+	Temperature string `json:"temperature"`
+	Weather     string `json:"weather"` // We'll use the "Description" from the external API here
+}
