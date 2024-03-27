@@ -9,23 +9,20 @@ import (
 
 // ExternalAPIResponse defines the structure for the external weather API response
 type ExternalAPIResponse struct {
-	Temperature string `json:"temperature"`
-	Wind        string `json:"wind"`
-	Description string `json:"description"`
-	Forecast    struct {
-		Day         string `json:"day"`
-		Temperature string `json:"temperature"`
-		Wind        string `json:"wind"`
-	} `json:"forecast"`
+	Main struct {
+		Temp float64 `json:"temp"`
+	} `json:"main"`
+	Weather []struct {
+		Description string `json:"description"`
+	} `json:"weather"`
 }
 
 // WeatherResponse defines the structure of our API response
 type WeatherResponse struct {
 	City        string `json:"city"`
 	Temperature string `json:"temperature"`
-	Weather     string `json:"weather"` // We'll use the "Description" from the external API here
+	Weather     string `json:"weather"`
 }
-
 type WeatherResponse2 struct {
 	Wind       string `json:"wind"`
 	Visibility string `json:"visibility"`
@@ -35,7 +32,8 @@ type WeatherResponse2 struct {
 
 // getWeather fetches weather data for a city using the external API
 func getWeather(cityName string) (WeatherResponse, error) {
-	url := fmt.Sprintf("https://goweather.herokuapp.com/weather/%s", cityName)
+	apiKey := "d51319b8aafa1e0618c55136562d617b"
+	url := fmt.Sprintf("https://api.openweathermap.org/data/2.5/weather?q=%s&appid=%s", cityName, apiKey)
 	resp, err := http.Get(url)
 	if err != nil {
 		return WeatherResponse{}, err
@@ -47,42 +45,15 @@ func getWeather(cityName string) (WeatherResponse, error) {
 		return WeatherResponse{}, err
 	}
 
+	// Convert temperature from Kelvin to Celsius
+	temperature := apiResponse.Main.Temp - 273.15
+
 	return WeatherResponse{
 		City:        strings.Title(cityName),
-		Temperature: apiResponse.Temperature,
-		Weather:     apiResponse.Description,
+		Temperature: fmt.Sprintf("%.2f°C", temperature),
+		Weather:     apiResponse.Weather[0].Description,
 	}, nil
 }
-
-//Function created by Nikhil
-
-func cityHandler(w http.ResponseWriter, r *http.Request) {
-	var weather WeatherResponse
-	var cityName string
-	var err error
-
-	if r.Method == "GET" {
-		cityName = r.URL.Query().Get("name")
-	} else if r.Method == "POST" {
-		var requestData struct{ Name string }
-		if err := json.NewDecoder(r.Body).Decode(&requestData); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-		cityName = requestData.Name
-	}
-
-	weather, err = getWeather(cityName)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(weather)
-}
-
-//function by Jevica
 
 func getWindAndVisibility(cityName string) (WeatherResponse2, error) {
 	apiKey := "d51319b8aafa1e0618c55136562d617b"
@@ -128,7 +99,6 @@ func getWindAndVisibility(cityName string) (WeatherResponse2, error) {
 		Snow:       snow,
 	}, nil
 }
-//function by Ashbir
 
 func WindAndVisibilityHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
@@ -160,7 +130,36 @@ func WindAndVisibilityHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func cityHandler(w http.ResponseWriter, r *http.Request) {
+	var weather WeatherResponse
+	var cityName string
+	var err error
+
+	if r.Method == "GET" {
+		cityName = r.URL.Query().Get("name")
+	} else if r.Method == "POST" {
+		var requestData struct{ Name string }
+		if err := json.NewDecoder(r.Body).Decode(&requestData); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		cityName = requestData.Name
+	}
+
+	weather, err = getWeather(cityName)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(weather)
+}
+
 func main() {
+	http.HandleFunc("/city", cityHandler)
+	//To consume the API ,Please refer as below url
+	// http://localhost:8012/city?name=CityName
 	http.HandleFunc("/WindAndVisibility", WindAndVisibilityHandler)
 	//To consume the API ,Please refer as below url
 	// http://localhost:8012/WindAndVisibility?city=CityName
