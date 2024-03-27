@@ -46,3 +46,31 @@ func getWeather(cityName string) (WeatherResponse, error) {
 		Weather:     apiResponse.Description,
 	}, nil
 }
+
+//Function created by Nikhil
+
+func cityHandler(w http.ResponseWriter, r *http.Request) {
+	var weather WeatherResponse
+	var cityName string
+	var err error
+
+	if r.Method == "GET" {
+		cityName = r.URL.Query().Get("name")
+	} else if r.Method == "POST" {
+		var requestData struct{ Name string }
+		if err := json.NewDecoder(r.Body).Decode(&requestData); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		cityName = requestData.Name
+	}
+
+	weather, err = getWeather(cityName)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(weather)
+}
