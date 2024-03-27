@@ -128,3 +128,44 @@ func getWindAndVisibility(cityName string) (WeatherResponse2, error) {
 		Snow:       snow,
 	}, nil
 }
+//function by Ashbir
+
+func WindAndVisibilityHandler(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		city := r.URL.Query().Get("city")
+		if city == "" {
+			http.Error(w, "City parameter is required", http.StatusBadRequest)
+			return
+		}
+
+		weatherData, err := getWindAndVisibility(city)
+		if err != nil {
+			http.Error(w, "Failed to fetch weather data", http.StatusInternalServerError)
+			return
+		}
+
+		jsonData, err := json.Marshal(weatherData)
+		if err != nil {
+			http.Error(w, "Failed to encode weather data", http.StatusInternalServerError)
+
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(jsonData)
+
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func main() {
+	http.HandleFunc("/WindAndVisibility", WindAndVisibilityHandler)
+	//To consume the API ,Please refer as below url
+	// http://localhost:8012/WindAndVisibility?city=CityName
+
+	Dport := "8012"
+	fmt.Printf("Server is starting on port: %v\n", Dport)
+	http.ListenAndServe(":"+Dport, nil)
+}
