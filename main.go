@@ -26,6 +26,13 @@ type WeatherResponse struct {
 	Weather     string `json:"weather"` // We'll use the "Description" from the external API here
 }
 
+type WeatherResponse2 struct {
+	Wind       string `json:"wind"`
+	Visibility string `json:"visibility"`
+	Rain       string `json:"rain"`
+	Snow       string `json:"snow"`
+}
+
 // getWeather fetches weather data for a city using the external API
 func getWeather(cityName string) (WeatherResponse, error) {
 	url := fmt.Sprintf("https://goweather.herokuapp.com/weather/%s", cityName)
@@ -73,4 +80,51 @@ func cityHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(weather)
+}
+
+//function by Jevica
+
+func getWindAndVisibility(cityName string) (WeatherResponse2, error) {
+	apiKey := "d51319b8aafa1e0618c55136562d617b"
+	url := fmt.Sprintf("https://api.openweathermap.org/data/2.5/weather?q=%s&appid=%s", cityName, apiKey)
+	resp, err := http.Get(url)
+	if err != nil {
+		return WeatherResponse2{}, err
+	}
+	defer resp.Body.Close()
+	var weatherData map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&weatherData); err != nil {
+		return WeatherResponse2{}, err
+	}
+
+	wind := ""
+	if windSpeed, ok := weatherData["wind"].(map[string]interface{})["speed"].(float64); ok {
+		wind = fmt.Sprintf("%.2f m/s", windSpeed)
+	}
+
+	visibility := ""
+	if visibilityVal, ok := weatherData["visibility"].(float64); ok {
+		visibility = fmt.Sprintf("%.2f meters", visibilityVal)
+	}
+
+	rain := ""
+	if rainData, ok := weatherData["rain"].(map[string]interface{}); ok {
+		if rainVal, ok := rainData["1h"].(float64); ok {
+			rain = fmt.Sprintf("%.2f mm", rainVal)
+
+		}
+	}
+
+	snow := ""
+	if snowData, ok := weatherData["snow"].(map[string]interface{}); ok {
+		if snowVal, ok := snowData["1h"].(float64); ok {
+			snow = fmt.Sprintf("%.2f mm", snowVal)
+		}
+	}
+	return WeatherResponse2{
+		Wind:       wind,
+		Visibility: visibility,
+		Rain:       rain,
+		Snow:       snow,
+	}, nil
 }
