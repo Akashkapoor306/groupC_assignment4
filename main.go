@@ -168,3 +168,24 @@ func main() {
 	fmt.Printf("Server is starting on port: %v\n", Dport)
 	http.ListenAndServe(":"+Dport, nil)
 }
+// Simrandeep Singh 500229180
+// getWeatherForecast fetches the weather forecast for the next N days for a city using the external API
+func getWeatherForecast(cityName string, days int) ([]struct {
+	Day         string json:"day"
+	Temperature string json:"temperature"
+	Wind        string json:"wind"
+}, error) {
+	url := fmt.Sprintf("https://goweather.herokuapp.com/weather/%s", cityName)
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var apiResponse ExternalAPIResponse
+	if err := json.NewDecoder(resp.Body).Decode(&apiResponse); err != nil {
+		return nil, err
+	}
+
+	return apiResponse.Forecast[:days], nil
+}
