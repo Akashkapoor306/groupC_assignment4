@@ -168,12 +168,13 @@ func main() {
 	fmt.Printf("Server is starting on port: %v\n", Dport)
 	http.ListenAndServe(":"+Dport, nil)
 }
+
 // Simrandeep Singh 500229180
-// getWeatherForecast fetches the weather forecast for the next N days for a city using the external API
+// Simrandeep Singh 500229180
 func getWeatherForecast(cityName string, days int) ([]struct {
-	Day         string json:"day"
-	Temperature string json:"temperature"
-	Wind        string json:"wind"
+	Day         string `json:"day"`
+	Temperature string `json:"temperature"`
+	Wind        string `json:"wind"`
 }, error) {
 	url := fmt.Sprintf("https://goweather.herokuapp.com/weather/%s", cityName)
 	resp, err := http.Get(url)
@@ -181,35 +182,26 @@ func getWeatherForecast(cityName string, days int) ([]struct {
 		return nil, err
 	}
 	defer resp.Body.Close()
-// Rajkarn Kaur
+
 	var apiResponse ExternalAPIResponse
 	if err := json.NewDecoder(resp.Body).Decode(&apiResponse); err != nil {
 		return nil, err
 	}
 
-	return apiResponse.Forecast[:days], nil
-}
-type ExternalAPIResponse struct {
-	Forecast []struct {
+	// Assume apiResponse contains forecast data in some format
+	// Create a slice to store the forecast for each day
+	forecast := make([]struct {
 		Day         string `json:"day"`
 		Temperature string `json:"temperature"`
 		Wind        string `json:"wind"`
-	} `json:"forecast"`
-}
+	}, days)
 
-func main() {
-	// Example: Get weather forecast for "New York" for the next 3 days
-	cityName := "New York"
-	days := 3
-
-	forecast, err := getWeatherForecast(cityName, days)
-	if err != nil {
-		fmt.Println("Error:", err)
-		return
+	// Populate the forecast slice with dummy data for illustration
+	for i := 0; i < days; i++ {
+		forecast[i].Day = fmt.Sprintf("Day %d", i+1)
+		forecast[i].Temperature = "25°C"
+		forecast[i].Wind = "10 km/h"
 	}
 
-	fmt.Println("Weather Forecast for", cityName)
-	for i, day := range forecast {
-		fmt.Printf("Day %d: Temperature - %s, Wind - %s\n", i+1, day.Temperature, day.Wind)
-	}
+	return forecast, nil
 }
