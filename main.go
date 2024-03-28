@@ -171,6 +171,14 @@ func main() {
 
 // Simrandeep Singh 500229180
 // Simrandeep Singh 500229180
+type ExternalAPIResponse struct {
+	Forecast []struct {
+		Day         string `json:"day"`
+		Temperature string `json:"temperature"`
+		Wind        string `json:"wind"`
+	} `json:"forecast"`
+}
+
 func getWeatherForecast(cityName string, days int) ([]struct {
 	Day         string `json:"day"`
 	Temperature string `json:"temperature"`
@@ -182,7 +190,7 @@ func getWeatherForecast(cityName string, days int) ([]struct {
 		return nil, err
 	}
 	defer resp.Body.Close()
-
+	// Rajkarn Kaur
 	var apiResponse ExternalAPIResponse
 	if err := json.NewDecoder(resp.Body).Decode(&apiResponse); err != nil {
 		return nil, err
@@ -204,4 +212,21 @@ func getWeatherForecast(cityName string, days int) ([]struct {
 	}
 
 	return forecast, nil
+}
+
+func main() {
+	// Example: Get weather forecast for "New York" for the next 3 days
+	cityName := "New York"
+	days := 3
+
+	forecast, err := getWeatherForecast(cityName, days)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+
+	fmt.Println("Weather Forecast for", cityName)
+	for i, day := range forecast {
+		fmt.Printf("Day %d: Temperature - %s, Wind - %s\n", i+1, day.Temperature, day.Wind)
+	}
 }
